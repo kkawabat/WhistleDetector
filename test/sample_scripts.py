@@ -1,15 +1,15 @@
-from scipy.io import wavfile
-
-from whilstle2midi.note_detector import notes_to_midi, whistle_to_notes
+from whilstle2midi.audio_processing import whistle_to_midi
 
 
-def run_from_audio_file():
+def audio_file_to_midi_file():
     sample_input_audio_path = './test_data/whistle_sample_stairwaytoheaven.wav'
-    sample_output_mid_path = './test_output/whistle_sample_16k.mid'
-    fs, audio = wavfile.read(sample_input_audio_path)
-    time, duration, midi_notes, volume = whistle_to_notes(fs, audio, plot=False)
-    notes_to_midi(time, duration, midi_notes, volume, sample_output_mid_path)
+    sample_output_mid_path = './test_output/whistle_sample_stairwaytoheaven.mid'
+    whistle_to_midi(sample_input_audio_path, sample_output_mid_path)
+
+    sample_input_audio_path = './test_data/whistle_sample_walklikeegyptian.wav'
+    sample_output_mid_path = './test_output/whistle_sample_walklikeegyptian.mid'
+    whistle_to_midi(sample_input_audio_path, sample_output_mid_path)
 
 
 if __name__ == '__main__':
-    run_from_audio_file()
+    audio_file_to_midi_file()
