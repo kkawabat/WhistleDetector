@@ -5,8 +5,12 @@ description = ""
 authors = ["Kan Kawabata <kkawabat@asu.edu>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.8,<3.10"
 kaudio-library = {git = "https://github.com/kkawabat/kaudio.git"}
+MIDIUtil = "^1.2.1"
+scipy = "^1.7.1"
+numpy = "^1.21.3"
+matplotlib = "^3.4.3"
 
 
 

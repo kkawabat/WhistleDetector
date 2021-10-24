@@ -5,8 +5,11 @@ This project tries to convert your whistle into a midi file.
 ### dependency
 - PortAudio 
 
-### Usage
+### installation
 
-- Download code with git
-- run main.py
+- run poetry install
+
+### usage 
+
+see test/sample_usage.py 
 
