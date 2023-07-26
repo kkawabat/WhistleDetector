@@ -1,4 +1,4 @@
-from whilstle2midi.audio_processing import whistle_to_midi
+from src.whistle_detector.audio_processing import whistle_to_midi
 
 
 def audio_file_to_midi_file():

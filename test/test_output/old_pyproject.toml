@@ -6,7 +6,7 @@ authors = ["Kan Kawabata <kkawabat@asu.edu>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
-kaudio-library = {git = "https://github.com/kkawabat/kaudio.git"}
+kaudio-library = {git = "https://github.com/kkawabat/kaudio.git", branch="master"}
 MIDIUtil = "^1.2.1"
 scipy = "^1.7.1"
 numpy = "^1.21.3"
