@@ -9,7 +9,7 @@ setup(
     license='MIT',
     author='Kan Kawabata',
     author_email='kkawabat@asu.edu',
-    description='Utility functions used to generate magic eye images',
+    description='This project tries to convert your whistle into a midi file',
     install_requires=[
         'kaudio-library @ git+ssh://git@github.com/kkawabat/KaudioLibrary.git',
         'matplotlib',
