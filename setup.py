@@ -17,5 +17,7 @@ setup(
         'numpy',
         'PyAudio',
         'scipy',
+        'sounddevice',
+        'ffmpeg-python'
     ]
 )
