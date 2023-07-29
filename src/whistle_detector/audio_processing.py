@@ -155,12 +155,12 @@ class WhistleDetector:
         with open(output_path, "wb") as output_file:
             mfile.writeFile(output_file)
 
-    def to_midi_blob(self):
+    def to_midi_blob64(self):
         mfile = self.construct_midi_file()
         with io.BytesIO() as output_file:
             mfile.writeFile(output_file)
             output_file.seek(0)
-            blob = base64.b64encode(output_file.read())
+            blob = base64.b64encode(output_file.read()).decode('utf-8')
         return blob
 
 

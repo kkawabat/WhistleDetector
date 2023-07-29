@@ -12,23 +12,15 @@ def audio_file_to_midi_file():
 
 
 def test_webm():
-    sample_input_audio_path = r'C:\Users\kkawa\PycharmProjects\WhistleDetector\test\test_data\download.weba'
+    sample_input_audio_path = r'.\test_data\sample.weba'
     WhistleDetector.from_webm(sample_input_audio_path)
 
 
-def test_webm_blob():
-    with open(r'C:\Users\kkawa\PycharmProjects\WhistleDetector\test\test_data\webm_blob', 'rb') as ifile:
-        WhistleDetector.from_webm_blob(ifile)
-
-
 def test_midi_blob():
-    wd = WhistleDetector.from_wav(r'C:\Users\kkawa\PycharmProjects\WhistleDetector\test\test_data\whistle_sample_stairwaytoheaven.wav')
-    blob = wd.to_midi_blob()
-    pass
+    wd = WhistleDetector.from_wav(r'.\test_data\whistle_sample_stairwaytoheaven.wav')
+    blob = wd.to_midi_blob64()
+    print(blob)
 
 
 if __name__ == '__main__':
     test_midi_blob()
-
-
-# ffmpeg -f lavfi -i testsrc=duration=10:size=1280x720:rate=30 testsrc.webm
