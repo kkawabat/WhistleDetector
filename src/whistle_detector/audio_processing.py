@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import tempfile
 
 import ffmpeg
@@ -47,11 +48,6 @@ class WhistleDetector:
         fs, audio = cls.webm_to_audio(webm_path)
         return cls.from_audio(audio, fs)
 
-    @classmethod
-    def from_webm_blob(cls, webm_blob):
-        fs, audio = cls.webm_blob_to_audio(webm_blob)
-        return cls.from_audio(audio, fs)
-
     @staticmethod
     def webm_to_audio(audio_blob, fs=16000):
         try:
@@ -69,11 +65,18 @@ class WhistleDetector:
         return fs, np.frombuffer(out, np.int16)
 
     @classmethod
+    def from_webm_blob(cls, webm_blob):
+        fs, audio = cls.webm_blob_to_audio(webm_blob)
+        return cls.from_audio(audio, fs)
+
+    @classmethod
     def webm_blob_to_audio(cls, webm_blob, fs=16000):
-        with tempfile.TemporaryFile(suffix='.weba', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix='.weba', delete=False) as f:
             f.write(webm_blob.read())
             f.seek(0)
             fs, audio = cls.webm_to_audio(f.name, fs=fs)
+            f.close()
+            os.unlink(f.name)  # required for windows https://stackoverflow.com/questions/23212435/permission-denied-to-write-to-my-temporary-file
         return fs, audio
 
     @classmethod
@@ -129,8 +132,8 @@ class WhistleDetector:
         nyq = 0.5 * fs
         low = lowcut / nyq
         high = highcut / nyq
-        b, a = butter(order, [low, high], btype='band')
-        y = lfilter(b, a, data)
+        b_a = butter(order, [low, high], btype='band')
+        y = lfilter(b_a[0], b_a[1], data)
         return y
 
     @staticmethod
