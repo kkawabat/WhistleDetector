@@ -12,12 +12,12 @@ def audio_file_to_midi_file():
 
 
 def test_webm():
-    sample_input_audio_path = r'.\test_data\sample.weba'
+    sample_input_audio_path = r'./test_data/sample.weba'
     WhistleDetector.from_webm(sample_input_audio_path)
 
 
 def test_midi_blob():
-    wd = WhistleDetector.from_wav(r'.\test_data\whistle_sample_stairwaytoheaven.wav')
+    wd = WhistleDetector.from_wav(r'./test_data/whistle_sample_stairwaytoheaven.wav')
     blob = wd.to_midi_blob64()
     print(blob)
 
