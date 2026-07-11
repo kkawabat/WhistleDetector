@@ -15,6 +15,12 @@ MIN_WHISTLE_DURATION = .05
 # enough that staccato notes remain separate amplitude peaks
 AMP_SMOOTHING_DURATION = .15
 MIN_PEAK_PROMINENCE = 100
+# two envelope peaks are one blow unless the valley between them dips below
+# this fraction of the smaller peak (in spectrogram power units)
+ARTICULATION_DIP_RATIO = .5
+# a pitch run bordering a one-semitone neighbor must be held this long to be
+# a deliberate note rather than onset scoop/drift
+MIN_STABLE_NOTE_DURATION = .15
 MAX_MIDI_VOLUMN = 127
 MAX_WHISTLE_FREQ = 5000
 MIN_WHISTLE_FREQ = 500
@@ -114,33 +120,50 @@ class WhistleDetector:
         # frames quieter than the minimum peak prominence are gaps/noise, not notes
         raw_midi_notes = np.where(amp_vec < MIN_PEAK_PROMINENCE, float('nan'), raw_midi_notes)
 
-        peak_prominence = peak_property['prominences']
-        peak_volume = np.round(MAX_MIDI_VOLUMN * (np.log(peak_prominence) / np.log(max(peak_prominence)))).astype(int)
+        # one blow can flutter in volume and register several envelope peaks;
+        # only treat peaks as separate articulations if the envelope truly
+        # dips in the valley between them
+        blows = []
+        for k in range(len(peak_idx)):
+            left, right = peak_property['left_ips'][k], peak_property['right_ips'][k]
+            prom, peak = peak_property['prominences'][k], peak_idx[k]
+            if blows:
+                prev = blows[-1]
+                valley = amp_vec[prev['peak']:peak].min()
+                if valley >= ARTICULATION_DIP_RATIO * min(amp_vec[prev['peak']], amp_vec[peak]):
+                    prev['right'] = max(prev['right'], right)
+                    prev['prom'] = max(prev['prom'], prom)
+                    prev['peak'] = peak
+                    continue
+            blows.append({'left': left, 'right': right, 'prom': prom, 'peak': peak})
+
+        max_prom = max(b['prom'] for b in blows)
+        stable_frames = max(min_frames, int(round(MIN_STABLE_NOTE_DURATION / dt)))
 
         time, duration, midi_notes, volume = [], [], [], []
         # a wide peak's half-prominence window can envelop a narrower peak's;
         # walk windows in chronological order and clamp overlaps so no frame
         # is transcribed twice
         prev_end = 0
-        for k in np.argsort(peak_property['left_ips']):
-            left, right, vol = peak_property['left_ips'][k], peak_property['right_ips'][k], peak_volume[k]
-            start = max(int(np.floor(left)), prev_end)
-            end = min(int(np.ceil(right)) + 1, len(time_vec))
+        for blow in sorted(blows, key=lambda b: b['left']):
+            vol = int(np.round(MAX_MIDI_VOLUMN * (np.log(blow['prom']) / np.log(max_prom))))
+            start = max(int(np.floor(blow['left'])), prev_end)
+            end = min(int(np.ceil(blow['right'])) + 1, len(time_vec))
             if end <= start:
                 continue
             prev_end = end
             # a sustained whistle is one amplitude peak but may contain several
             # notes played legato; split it wherever the pitch settles on a new note
-            for run_start, run_frames, note in cls._pitch_runs(raw_midi_notes[start:end], min_frames):
+            for run_start, run_frames, note in cls._pitch_runs(raw_midi_notes[start:end], min_frames, stable_frames):
                 time.append(time_vec[start + run_start])
                 duration.append(run_frames * dt)
                 midi_notes.append(int(note))
-                volume.append(int(vol))
+                volume.append(vol)
 
         return time, duration, midi_notes, volume
 
     @classmethod
-    def _pitch_runs(cls, window_notes, min_frames):
+    def _pitch_runs(cls, window_notes, min_frames, stable_frames):
         """Split a segment's per-frame notes into (start, length, note) runs of
         stable pitch, dropping runs shorter than min_frames."""
         smoothed = cls._nan_median_smooth(window_notes)
@@ -156,13 +179,19 @@ class WhistleDetector:
 
         long_runs = [r for r in runs if r[1] >= min_frames]
         if long_runs:
-            # vibrato can wobble across a semitone boundary and split one held
-            # note; re-join same-note runs separated by less than min_frames
             merged = [long_runs[0]]
             for start, length, note in long_runs[1:]:
                 prev_start, prev_length, prev_note = merged[-1]
+                # vibrato can wobble across a semitone boundary and split one
+                # held note; re-join same-note runs separated by a short gap
                 if note == prev_note and start - (prev_start + prev_length) < min_frames:
                     merged[-1] = (prev_start, start + length - prev_start, note)
+                # a one-semitone neighbor that isn't held long enough on one
+                # side is onset scoop/drift within a single note, not legato:
+                # absorb it into whichever run dominates
+                elif abs(note - prev_note) == 1 and min(length, prev_length) < stable_frames:
+                    dominant = prev_note if prev_length >= length else note
+                    merged[-1] = (prev_start, start + length - prev_start, dominant)
                 else:
                     merged.append((start, length, note))
             return merged
