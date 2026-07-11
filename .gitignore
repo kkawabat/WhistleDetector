@@ -2,4 +2,5 @@
 /.idea/
 dist/
 *.egg-info/
-/build/__pycache__/
+/build/
+__pycache__/
